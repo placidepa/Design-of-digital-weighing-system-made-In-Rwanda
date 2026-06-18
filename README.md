@@ -1,9 +1,10 @@
-# Design-of-Digital-Weighing-Scale-System
+# Design of Digital Weighing Scale System
+
 ![Prototype Overview](images/sys.png)
 
-A low-cost, embedded digital weighing scale developed using a 20 kg strain-gauge load cell, HX711 24-bit ADC module, Arduino Uno, I2C LCD display, EEPROM-based calibration storage, and event-driven firmware architecture.
+A low-cost embedded digital weighing scale developed using a 20 kg strain-gauge load cell, an HX711 24-bit ADC module, an Arduino Uno, an I2C LCD display, EEPROM-based calibration storage, and event-driven firmware architecture.
 
-The project demonstrates the complete signal acquisition chain from force measurement to digital weight display while implementing industrial firmware design principles such as finite state machines (FSM), non-blocking execution, digital filtering, EEPROM persistence, and robust user interaction through a TARE function.
+The project demonstrates the complete signal acquisition chain from force measurement to digital weight display. It also implements embedded firmware design principles such as finite state machines (FSM), non-blocking execution, digital filtering, EEPROM persistence, and robust user interaction through a TARE function.
 
 ---
 
@@ -42,15 +43,15 @@ This signal is amplified and digitized by the HX711 before being processed by th
 
 The firmware is implemented using a cooperative non-blocking architecture.
 
-Instead of using delay() functions, periodic tasks are executed based on elapsed time using millis().
+Instead of using `delay()` functions, periodic tasks are executed based on elapsed time using `millis()`.
 
 Main tasks include:
 
-* HX711 Sampling Task
-* Button Scanning Task
-* LCD Update Task
-* LED Management Task
-* EEPROM Management
+* HX711 sampling task
+* Button scanning task
+* LCD update task
+* LED management task
+* EEPROM management
 
 This architecture improves responsiveness and scalability while maintaining deterministic behavior.
 
@@ -82,9 +83,7 @@ When force is applied:
 * Their resistance changes.
 * A differential voltage is generated.
 
-The output voltage is extremely small, typically in the millivolt range.
-
-Therefore direct connection to an Arduino ADC is impractical.
+The output voltage is extremely small, typically in the millivolt range. Therefore, direct connection to an Arduino ADC is impractical.
 
 The HX711 module is used to amplify and digitize the signal.
 
@@ -104,11 +103,11 @@ The amplified signal is converted into a 24-bit digital value.
 
 The Arduino receives this value as a raw ADC count.
 
-Example:
+Example raw ADC count:
 
-Raw ADC Count:
-
+```text
 252415
+```
 
 This raw count has no physical meaning until calibration is applied.
 
@@ -122,12 +121,12 @@ The firmware converts raw ADC counts into meaningful weight measurements through
 
 These stages include:
 
-1. Raw Data Acquisition
-2. Moving Average Filtering
-3. Tare Compensation
-4. Calibration Scaling
-5. Weight Calculation
-6. Display Output
+1. Raw data acquisition
+2. Moving average filtering
+3. Tare compensation
+4. Calibration scaling
+5. Weight calculation
+6. Display output
 
 ---
 
@@ -143,18 +142,21 @@ The filter uses the latest 16 samples.
 
 Mathematically:
 
-y[n] = (1/N) × Σ x[n-k]
+```text
+y[n] = (1 / N) * sum(x[n-k])
+```
 
 where:
 
-* x[n] = current sample
-* N = 16
-* y[n] = filtered output
+* `x[n]` = current sample
+* `N` = 16
+* `y[n]` = filtered output
 
 In firmware:
 
-FilteredValue =
-(Sample1 + Sample2 + ... + Sample16) / 16
+```text
+FilteredValue = (Sample1 + Sample2 + ... + Sample16) / 16
+```
 
 Benefits:
 
@@ -179,16 +181,18 @@ Typical use cases:
 
 Operation:
 
-1. User presses TARE button.
-2. Firmware enters TARE state.
+1. User presses the TARE button.
+2. Firmware enters the TARE state.
 3. Twenty HX711 samples are acquired.
-4. Average value becomes the new tare offset.
-5. Offset is stored in EEPROM.
-6. System returns to READY state.
+4. The average value becomes the new tare offset.
+5. The offset is stored in EEPROM.
+6. The system returns to the READY state.
 
 The displayed weight becomes:
 
-Weight = Measured Weight − Tare Offset
+```text
+Weight = Measured Weight - Tare Offset
+```
 
 ---
 
@@ -198,40 +202,37 @@ The calibration process determines the relationship between ADC counts and actua
 
 Calibration firmware:
 
+```text
 weiCal.ino
+```
 
 Procedure:
 
-1. Upload weiCal.ino
-2. Remove all weight
-3. Press TARE
-4. Record Offset value
-5. Place known weight
-6. Record Average Raw Reading
-7. Compute calibration factor
+1. Upload `weiCal.ino`.
+2. Remove all weight from the scale.
+3. Press TARE.
+4. Record the offset value.
+5. Place a known weight on the scale.
+6. Record the average raw reading.
+7. Compute the calibration factor.
 
 Formula:
 
-Calibration Factor =
-(Raw Reading − Offset) / Known Weight
+```text
+Calibration Factor = (Raw Reading - Offset) / Known Weight
+```
 
 Example:
 
+```text
 Known Weight = 900 g
-
 Offset = 159610
-
 Average Raw Reading = 252415
-
-Net Counts = 252415 − 159610
-
+Net Counts = 252415 - 159610
 Net Counts = 92805
-
-Calibration Factor:
-
-92805 / 900
-
-Calibration Factor = 103.1167 Counts/Gram
+Calibration Factor = 92805 / 900
+Calibration Factor = 103.1167 counts/gram
+```
 
 ---
 
@@ -239,21 +240,23 @@ Calibration Factor = 103.1167 Counts/Gram
 
 The final firmware calculates weight using:
 
-Weight (grams) =
-(Raw Count − Tare Offset) / Counts Per Gram
+```text
+Weight (grams) = (Raw Count - Tare Offset) / Counts Per Gram
+```
 
 For this implementation:
 
+```text
 Counts Per Gram = 103.1167
+```
 
 Example:
 
-Weight =
-(252415 − 159610) / 103.1167
-
-Weight ≈ 900 g
-
-Weight ≈ 0.90 kg
+```text
+Weight = (252415 - 159610) / 103.1167
+Weight ~= 900 g
+Weight ~= 0.90 kg
+```
 
 ---
 
@@ -263,14 +266,14 @@ To prevent recalibration after power loss, calibration parameters are stored in 
 
 Stored parameters:
 
-* EEPROM Signature
-* Calibration Factor
-* Tare Offset
+* EEPROM signature
+* Calibration factor
+* Tare offset
 
 At startup:
 
 1. Firmware loads EEPROM data.
-2. Signature is verified.
+2. The signature is verified.
 3. Valid calibration values are restored.
 4. Normal operation begins.
 
@@ -290,9 +293,10 @@ States:
 
 Displays:
 
+```text
 UMUNZANI
-
 Made in Rwanda
+```
 
 ### READY
 
@@ -312,7 +316,9 @@ Transitions are event-driven and non-blocking.
 
 File:
 
-weiCal.ino
+```text
+weiCal/weiCal.ino
+```
 
 Purpose:
 
@@ -326,7 +332,9 @@ Purpose:
 
 File:
 
-Final_Firmware.ino
+```text
+Final_Firmware/Final_Firmware.ino
+```
 
 Features:
 
@@ -357,14 +365,14 @@ Features:
 
 # System Startup Sequence
 
-1. Power On
-2. Display Splash Screen
-3. Load EEPROM Parameters
+1. Power on
+2. Display splash screen
+3. Load EEPROM parameters
 4. Initialize HX711
-5. Start Sampling
-6. Apply Filtering
-7. Display Weight
-8. Wait for User Events
+5. Start sampling
+6. Apply filtering
+7. Display weight
+8. Wait for user events
 
 ---
 
@@ -395,4 +403,3 @@ Kigali, Rwanda
 # License
 
 This project is released for educational, research, and product development purposes.
-
